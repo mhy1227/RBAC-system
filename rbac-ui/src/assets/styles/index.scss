@@ -1,0 +1,41 @@
+@use './variables.scss' as *;
+@use './reset.scss';
+
+// 全局样式
+:root {
+  --el-color-primary: #409eff;
+}
+
+// 布局相关
+.app-container {
+  padding: 20px;
+}
+
+// 通用样式
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+// 表单相关
+.search-form {
+  margin-bottom: 20px;
+  
+  .el-form-item {
+    margin-bottom: 0;
+  }
+}
+
+// 表格相关
+.table-operations {
+  margin-bottom: 20px;
+}

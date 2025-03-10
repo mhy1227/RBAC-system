@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.czj.rbac.mapper.SecurityQuestionMapper">
+    
+    <!-- 用户密保信息结果映射 -->
+    <resultMap id="UserSecurityMap" type="com.czj.rbac.model.UserSecurity">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="questions" property="questions"/>
+        <result column="error_count" property="errorCount"/>
+        <result column="last_error_time" property="lastErrorTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 密保问题模板结果映射 -->
+    <resultMap id="TemplateMap" type="com.czj.rbac.model.SecurityQuestionTemplate">
+        <id column="id" property="id"/>
+        <result column="question" property="question"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+    
+    <!-- 查询用户密保信息 -->
+    <select id="findByUserId" resultMap="UserSecurityMap">
+        SELECT * FROM security_question WHERE user_id = #{userId}
+    </select>
+    
+    <!-- 保存用户密保信息 -->
+    <insert id="insertUserSecurity" parameterType="com.czj.rbac.model.UserSecurity">
+        INSERT INTO security_question (
+            user_id, questions, error_count, last_error_time, create_time, update_time
+        ) VALUES (
+            #{userId}, #{questions}, #{errorCount}, #{lastErrorTime}, 
+            NOW(), NOW()
+        )
+    </insert>
+    
+    <!-- 更新用户密保信息 -->
+    <update id="updateUserSecurity" parameterType="com.czj.rbac.model.UserSecurity">
+        UPDATE security_question
+        SET questions = #{questions},
+            update_time = NOW()
+        WHERE user_id = #{userId}
+    </update>
+    
+    <!-- 更新错误次数和时间 -->
+    <update id="updateErrorInfo">
+        UPDATE security_question
+        SET error_count = #{errorCount},
+            last_error_time = NOW()
+        WHERE user_id = #{userId}
+    </update>
+    
+    <!-- 重置错误次数 -->
+    <update id="resetErrorCount">
+        UPDATE security_question
+        SET error_count = 0,
+            last_error_time = NULL
+        WHERE user_id = #{userId}
+    </update>
+    
+    <!-- 查询密保问题模板列表 -->
+    <select id="findTemplateList" resultMap="TemplateMap">
+        SELECT * FROM security_question_template
+        WHERE 1=1
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        ORDER BY type, id
+    </select>
+    
+    <!-- 新增密保问题模板 -->
+    <insert id="insertTemplate" parameterType="com.czj.rbac.model.SecurityQuestionTemplate">
+        INSERT INTO security_question_template (
+            question, type, status, create_time, update_time
+        ) VALUES (
+            #{question}, #{type}, #{status}, NOW(), NOW()
+        )
+    </insert>
+    
+    <!-- 更新密保问题模板 -->
+    <update id="updateTemplate" parameterType="com.czj.rbac.model.SecurityQuestionTemplate">
+        UPDATE security_question_template
+        SET question = #{question},
+            type = #{type},
+            status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 更新模板状态 -->
+    <update id="updateTemplateStatus">
+        UPDATE security_question_template
+        SET status = #{status},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+    
+    <!-- 检查问题是否存在 -->
+    <select id="checkQuestionExists" resultType="int">
+        SELECT COUNT(1) FROM security_question_template
+        WHERE question = #{question}
+    </select>
+    
+</mapper> 

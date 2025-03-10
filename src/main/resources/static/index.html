@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RBAC权限管理系统</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/theme-chalk/index.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+        .el-container {
+            height: 100vh;
+        }
+        .el-aside {
+            background-color: #304156;
+            color: #fff;
+        }
+        .el-header {
+            background-color: #fff;
+            color: #333;
+            line-height: 60px;
+            border-bottom: 1px solid #dcdfe6;
+        }
+        .logo {
+            height: 60px;
+            line-height: 60px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #263445;
+        }
+        .el-menu {
+            border-right: none;
+        }
+        .header-right {
+            float: right;
+            margin-right: 20px;
+        }
+        .main-content {
+            padding: 20px;
+            height: calc(100vh - 60px);
+            box-sizing: border-box;
+        }
+        .tab-container {
+            height: 100%;
+            background: #fff;
+            border-radius: 4px;
+        }
+        .avatar-uploader .el-upload {
+            border: 1px dashed #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+        }
+        .avatar-uploader-icon {
+            font-size: 28px;
+            color: #8c939d;
+            width: 178px;
+            height: 178px;
+            line-height: 178px;
+            text-align: center;
+        }
+        .avatar {
+            width: 178px;
+            height: 178px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <el-container>
+            <el-aside width="200px">
+                <div class="logo">RBAC系统</div>
+                <el-menu
+                    :default-active="activeMenu"
+                    background-color="#304156"
+                    text-color="#fff"
+                    active-text-color="#409EFF"
+                    unique-opened
+                    router>
+                    <el-submenu index="1">
+                        <template slot="title">
+                            <i class="el-icon-user"></i>
+                            <span>系统管理</span>
+                        </template>
+                        <el-menu-item index="/user">用户管理</el-menu-item>
+                        <el-menu-item index="/role">角色管理</el-menu-item>
+                        <el-menu-item index="/permission">权限管理</el-menu-item>
+                    </el-submenu>
+                    <el-menu-item index="/log">
+                        <i class="el-icon-document"></i>
+                        <span slot="title">操作日志</span>
+                    </el-menu-item>
+                </el-menu>
+            </el-aside>
+            
+            <el-container>
+                <el-header>
+                    <div class="header-right">
+                        <el-dropdown @command="handleCommand">
+                            <span class="el-dropdown-link">
+                                {{userInfo.nickname || userInfo.username}}<i class="el-icon-arrow-down el-icon--right"></i>
+                            </span>
+                            <el-dropdown-menu slot="dropdown">
+                                <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+                                <el-dropdown-item command="password">修改密码</el-dropdown-item>
+                                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                    </div>
+                </el-header>
+                
+                <el-main class="main-content">
+                    <div class="tab-container">
+                        <div class="avatar-upload">
+                            <el-upload
+                                class="avatar-uploader"
+                                action="/user/avatar"
+                                :headers="uploadHeaders"
+                                :show-file-list="false"
+                                :on-success="handleAvatarSuccess"
+                                :before-upload="beforeAvatarUpload">
+                                <img v-if="userInfo.avatar" :src="userInfo.avatar" class="avatar">
+                                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                            </el-upload>
+                        </div>
+                    </div>
+                </el-main>
+            </el-container>
+        </el-container>
+
+        <!-- 修改密码对话框 -->
+        <el-dialog title="修改密码" :visible.sync="passwordDialogVisible" width="400px">
+            <el-form :model="passwordForm" :rules="passwordRules" ref="passwordForm" label-width="100px">
+                <el-form-item label="原密码" prop="oldPassword">
+                    <el-input v-model="passwordForm.oldPassword" type="password"></el-input>
+                </el-form-item>
+                <el-form-item label="新密码" prop="newPassword">
+                    <el-input v-model="passwordForm.newPassword" type="password"></el-input>
+                </el-form-item>
+                <el-form-item label="确认密码" prop="confirmPassword">
+                    <el-input v-model="passwordForm.confirmPassword" type="password"></el-input>
+                </el-form-item>
+            </el-form>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="passwordDialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="handleChangePassword" :loading="passwordLoading">确 定</el-button>
+            </div>
+        </el-dialog>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/index.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script src="/js/axios-config.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                const validateConfirmPassword = (rule, value, callback) => {
+                    if (value !== this.passwordForm.newPassword) {
+                        callback(new Error('两次输入密码不一致'));
+                    } else {
+                        callback();
+                    }
+                };
+                
+                return {
+                    activeMenu: '/user',
+                    currentPage: 'user.html',
+                    userInfo: {},
+                    passwordDialogVisible: false,
+                    passwordLoading: false,
+                    passwordForm: {
+                        oldPassword: '',
+                        newPassword: '',
+                        confirmPassword: ''
+                    },
+                    passwordRules: {
+                        oldPassword: [
+                            { required: true, message: '请输入原密码', trigger: 'blur' }
+                        ],
+                        newPassword: [
+                            { required: true, message: '请输入新密码', trigger: 'blur' },
+                            { min: 6, message: '密码长度不能小于6位', trigger: 'blur' }
+                        ],
+                        confirmPassword: [
+                            { required: true, message: '请再次输入新密码', trigger: 'blur' },
+                            { validator: validateConfirmPassword, trigger: 'blur' }
+                        ]
+                    }
+                }
+            },
+            computed: {
+                uploadHeaders() {
+                    return {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    }
+                }
+            },
+            created() {
+                this.checkLogin();
+                this.getUserInfo();
+            },
+            methods: {
+                checkLogin() {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        this.$message.error('请先登录');
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                },
+                getUserInfo() {
+                    axios.get('/auth/info')
+                        .then(res => {
+                            if (res.code === 200 && res.data) {
+                                this.userInfo = res.data;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取用户信息失败:', error);
+                            this.$message.error('获取用户信息失败');
+                        });
+                },
+                handleCommand(command) {
+                    switch (command) {
+                        case 'profile':
+                            // 处理个人信息
+                            break;
+                        case 'password':
+                            this.passwordDialogVisible = true;
+                            break;
+                        case 'logout':
+                            this.handleLogout();
+                            break;
+                    }
+                },
+                handleLogout() {
+                    axios.post('/auth/logout')
+                        .then(res => {
+                            if (res.code === 200) {
+                                // 清除本地存储的信息
+                                localStorage.removeItem('token');
+                                localStorage.removeItem('refreshToken');
+                                localStorage.removeItem('permissions');
+                                localStorage.removeItem('userId');
+                                localStorage.removeItem('username');
+                                
+                                this.$message.success('退出登录成功');
+                                setTimeout(() => {
+                                    window.location.href = '/login.html';
+                                }, 500);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('退出登录失败:', error);
+                            this.$message.error('退出登录失败');
+                        });
+                },
+                handleChangePassword() {
+                    this.$refs.passwordForm.validate(valid => {
+                        if (valid) {
+                            this.passwordLoading = true;
+                            axios.post('/user/password', this.passwordForm)
+                                .then(res => {
+                                    if (res.code === 200) {
+                                        this.$message.success('密码修改成功，请重新登录');
+                                        this.passwordDialogVisible = false;
+                                        setTimeout(() => {
+                                            this.handleLogout();
+                                        }, 1000);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('修改密码失败:', error);
+                                    this.$message.error(error.message || '修改密码失败');
+                                })
+                                .finally(() => {
+                                    this.passwordLoading = false;
+                                });
+                        }
+                    });
+                },
+                handleAvatarSuccess(res) {
+                    if (res.code === 200) {
+                        this.userInfo.avatar = res.data;
+                        this.$message.success('头像上传成功');
+                    } else {
+                        this.$message.error(res.message || '头像上传失败');
+                    }
+                },
+                beforeAvatarUpload(file) {
+                    const isJPG = file.type === 'image/jpeg' || file.type === 'image/png';
+                    const isLt2M = file.size / 1024 / 1024 < 2;
+
+                    if (!isJPG) {
+                        this.$message.error('上传头像图片只能是 JPG/PNG 格式!');
+                    }
+                    if (!isLt2M) {
+                        this.$message.error('上传头像图片大小不能超过 2MB!');
+                    }
+                    return isJPG && isLt2M;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,351 @@
+RBAC权限管理系统API文档
+===================
+
+1. 认证管理
+-----------------
+1.1 用户登录
+POST /auth/login
+Request:
+{
+    "username": "admin",
+    "password": "123456"
+}
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "token": "eyJhbGciOiJIUzI1NiJ9..."
+    }
+}
+
+1.2 退出登录
+POST /auth/logout
+Header:
+Authorization: Bearer {token}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+1.3 获取当前用户信息
+GET /auth/info
+Header:
+Authorization: Bearer {token}
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": 1,
+        "username": "admin",
+        "nickname": "管理员",
+        "email": "admin@example.com",
+        "phone": "13800138000"
+    }
+}
+
+2. 用户管理
+-----------------
+2.1 分页查询用户列表
+GET /user/page?page=1&size=10
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:query
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "total": 100,
+        "list": [{
+            "id": 1,
+            "username": "admin",
+            "nickname": "管理员",
+            "email": "admin@example.com",
+            "phone": "13800138000",
+            "status": 1,
+            "createTime": "2024-01-21 10:00:00",
+            "roles": [{
+                "id": 1,
+                "roleName": "超级管理员"
+            }]
+        }]
+    }
+}
+
+2.2 获取用户详情
+GET /user/{id}
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:query
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": 1,
+        "username": "admin",
+        "nickname": "管理员",
+        "email": "admin@example.com",
+        "phone": "13800138000",
+        "status": 1,
+        "createTime": "2024-01-21 10:00:00",
+        "roles": [{
+            "id": 1,
+            "roleName": "超级管理员"
+        }]
+    }
+}
+
+2.3 新增用户
+POST /user
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:add
+Request:
+{
+    "username": "test",
+    "password": "123456",
+    "nickname": "测试用户",
+    "email": "test@example.com",
+    "phone": "13800138001",
+    "status": 1,
+    "roleIds": [2]
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+2.4 更新用户
+PUT /user
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:update
+Request:
+{
+    "id": 2,
+    "username": "test",
+    "nickname": "测试用户",
+    "email": "test@example.com",
+    "phone": "13800138001",
+    "status": 1,
+    "roleIds": [2]
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+2.5 删除用户
+DELETE /user/{id}
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:delete
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+2.6 更新用户状态
+PUT /user/{id}/status/{status}
+Header:
+Authorization: Bearer {token}
+Permission: sys:user:update
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+3. 角色管理
+-----------------
+3.1 分页查询角色列表
+GET /role/page?page=1&size=10
+Header:
+Authorization: Bearer {token}
+Permission: sys:role:query
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "total": 10,
+        "list": [{
+            "id": 1,
+            "roleName": "超级管理员",
+            "roleCode": "ROLE_ADMIN",
+            "description": "系统超级管理员",
+            "status": 1,
+            "createTime": "2024-01-21 10:00:00"
+        }]
+    }
+}
+
+3.2 获取角色详情
+GET /role/{id}
+Header:
+Authorization: Bearer {token}
+Permission: sys:role:query
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "id": 1,
+        "roleName": "超级管理员",
+        "roleCode": "ROLE_ADMIN",
+        "description": "系统超级管理员",
+        "status": 1,
+        "createTime": "2024-01-21 10:00:00"
+    }
+}
+
+3.3 新增角色
+POST /role
+Header:
+Authorization: Bearer {token}
+Permission: sys:role:add
+Request:
+{
+    "roleName": "测试角色",
+    "roleCode": "ROLE_TEST",
+    "description": "测试角色",
+    "status": 1
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+3.4 更新角色
+PUT /role
+Header:
+Authorization: Bearer {token}
+Permission: sys:role:update
+Request:
+{
+    "id": 2,
+    "roleName": "测试角色",
+    "roleCode": "ROLE_TEST",
+    "description": "测试角色",
+    "status": 1
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+3.5 分配角色权限
+POST /role/{roleId}/permission
+Header:
+Authorization: Bearer {token}
+Permission: sys:role:assign
+Request:
+[1, 2, 3]  // 权限ID列表
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+4. 权限管理
+-----------------
+4.1 获取权限树
+GET /permission/tree
+Header:
+Authorization: Bearer {token}
+Permission: sys:permission:query
+Response:
+{
+    "code": 200,
+    "message": "success",
+    "data": [{
+        "id": 1,
+        "permissionName": "系统管理",
+        "permissionCode": "sys:manage",
+        "type": "menu",
+        "parentId": 0,
+        "path": "/system",
+        "children": [{
+            "id": 2,
+            "permissionName": "用户管理",
+            "permissionCode": "sys:user:manage",
+            "type": "menu",
+            "parentId": 1,
+            "path": "/system/user"
+        }]
+    }]
+}
+
+4.2 新增权限
+POST /permission
+Header:
+Authorization: Bearer {token}
+Permission: sys:permission:add
+Request:
+{
+    "permissionName": "测试权限",
+    "permissionCode": "sys:test",
+    "type": "menu",
+    "parentId": 0,
+    "path": "/test",
+    "status": 1
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+4.3 更新权限
+PUT /permission
+Header:
+Authorization: Bearer {token}
+Permission: sys:permission:update
+Request:
+{
+    "id": 2,
+    "permissionName": "测试权限",
+    "permissionCode": "sys:test",
+    "type": "menu",
+    "parentId": 0,
+    "path": "/test",
+    "status": 1
+}
+Response:
+{
+    "code": 200,
+    "message": "success"
+}
+
+5. 错误码说明
+-----------------
+200: 成功
+400: 参数错误
+401: 未登录
+403: 无权限
+500: 系统错误
+
+6. 权限说明
+-----------------
+sys:user:query    - 用户查询
+sys:user:add      - 用户新增
+sys:user:update   - 用户修改
+sys:user:delete   - 用户删除
+sys:role:query    - 角色查询
+sys:role:add      - 角色新增
+sys:role:update   - 角色修改
+sys:role:delete   - 角色删除
+sys:role:assign   - 角色分配权限
+sys:permission:query    - 权限查询
+sys:permission:add      - 权限新增
+sys:permission:update   - 权限修改
+sys:permission:delete   - 权限删除

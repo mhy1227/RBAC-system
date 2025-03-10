@@ -1,0 +1,318 @@
+{
+  "info": {
+    "name": "RBAC系统接口",
+    "description": "RBAC权限管理系统接口文档",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "用户模块",
+      "item": [
+        {
+          "name": "分页查询用户列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/page?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "获取用户详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "新增用户",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"test_user\",\n  \"nickname\": \"测试用户\",\n  \"email\": \"test@example.com\",\n  \"phone\": \"13800138000\",\n  \"status\": 1,\n  \"roleIds\": [1, 2]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user"]
+            }
+          }
+        },
+        {
+          "name": "更新用户",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"nickname\": \"更新后的昵称\",\n  \"email\": \"updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user"]
+            }
+          }
+        },
+        {
+          "name": "删除用户",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "1"]
+            }
+          }
+        },
+        {
+          "name": "更新用户状态",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/user/1/status/0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "user", "1", "status", "0"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "角色模块",
+      "item": [
+        {
+          "name": "分页查询角色列表",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/role/page?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role", "page"],
+              "query": [
+                {
+                  "key": "pageNum",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "获取角色详情",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/role/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role", "1"]
+            }
+          }
+        },
+        {
+          "name": "新增角色",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleName\": \"测试角色\",\n  \"roleCode\": \"TEST_ROLE\",\n  \"description\": \"这是一个测试角色\",\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role"]
+            }
+          }
+        },
+        {
+          "name": "更新角色",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"roleName\": \"更新后的角色名\",\n  \"description\": \"更新后的描述\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role"]
+            }
+          }
+        },
+        {
+          "name": "删除角色",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/role/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role", "1"]
+            }
+          }
+        },
+        {
+          "name": "分配角色权限",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionIds\": [1, 2, 3, 4, 5]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/role/1/permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "role", "1", "permission"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "权限模块",
+      "item": [
+        {
+          "name": "获取权限树",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permission/tree",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permission", "tree"]
+            }
+          }
+        },
+        {
+          "name": "新增权限",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissionName\": \"测试权限\",\n  \"permissionCode\": \"test:permission\",\n  \"description\": \"这是一个测试权限\",\n  \"parentId\": 0,\n  \"type\": \"menu\",\n  \"path\": \"/test\",\n  \"status\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permission"]
+            }
+          }
+        },
+        {
+          "name": "更新权限",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": 1,\n  \"permissionName\": \"更新后的权限名\",\n  \"description\": \"更新后的描述\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permission",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permission"]
+            }
+          }
+        },
+        {
+          "name": "删除权限",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permission/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permission", "1"]
+            }
+          }
+        },
+        {
+          "name": "获取角色权限",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/permission/role/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permission", "role", "1"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    }
+  ]
+} 
