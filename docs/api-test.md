@@ -1,6 +1,6 @@
 # RBAC系统前端接口测试文档
 
-##1.Postman导入步骤：
+## 1.Postman导入步骤：
 打开Postman
 点击左上角的"Import"按钮
 选择"File" -> "Upload Files"
@@ -10,7 +10,7 @@
 点击右上角的"Environment"
 创建新环境（如"RBAC-Local"）
 添加变量baseUrl，值为http://localhost:3000
-##2.Apifox导入步骤：
+## 2.Apifox导入步骤：
 打开Apifox
 点击左侧"项目"
 点击"导入项目"
