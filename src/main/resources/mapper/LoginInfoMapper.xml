@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.czj.rbac.mapper.LoginInfoMapper">
+    
+    <resultMap id="BaseResultMap" type="com.czj.rbac.model.LoginInfo">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="username" property="username"/>
+        <result column="login_id" property="loginId"/>
+        <result column="device_type" property="deviceType"/>
+        <result column="device_info" property="deviceInfo"/>
+        <result column="browser" property="browser"/>
+        <result column="os" property="os"/>
+        <result column="login_ip" property="loginIp"/>
+        <result column="login_location" property="loginLocation"/>
+        <result column="login_time" property="loginTime"/>
+        <result column="logout_time" property="logoutTime"/>
+        <result column="login_status" property="loginStatus"/>
+        <result column="fail_reason" property="failReason"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, user_id, username, login_id, device_type, device_info, browser, os,
+        login_ip, login_location, login_time, logout_time, login_status, fail_reason,
+        status, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.czj.rbac.model.LoginInfo">
+        INSERT INTO sys_login_info (
+            user_id, username, login_id, device_type, device_info, browser, os,
+            login_ip, login_location, login_time, login_status, fail_reason
+        ) VALUES (
+            #{userId}, #{username}, #{loginId}, #{deviceType}, #{deviceInfo}, #{browser}, #{os},
+            #{loginIp}, #{loginLocation}, #{loginTime}, #{loginStatus}, #{failReason}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.czj.rbac.model.LoginInfo">
+        UPDATE sys_login_info
+        <set>
+            <if test="deviceType != null">device_type = #{deviceType},</if>
+            <if test="deviceInfo != null">device_info = #{deviceInfo},</if>
+            <if test="browser != null">browser = #{browser},</if>
+            <if test="os != null">os = #{os},</if>
+            <if test="loginIp != null">login_ip = #{loginIp},</if>
+            <if test="loginLocation != null">login_location = #{loginLocation},</if>
+            <if test="logoutTime != null">logout_time = #{logoutTime},</if>
+            <if test="loginStatus != null">login_status = #{loginStatus},</if>
+            <if test="failReason != null">fail_reason = #{failReason},</if>
+            <if test="status != null">status = #{status},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_login_info
+        WHERE id = #{id}
+    </select>
+
+    <select id="findLatestByUserId" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_login_info
+        WHERE user_id = #{userId}
+        AND status = 1
+        ORDER BY login_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_login_info
+        <where>
+            AND status = 1
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="username != null and username != ''">AND username LIKE CONCAT('%', #{username}, '%')</if>
+            <if test="loginIp != null and loginIp != ''">AND login_ip LIKE CONCAT('%', #{loginIp}, '%')</if>
+            <if test="startTime != null">AND login_time >= #{startTime}</if>
+            <if test="endTime != null">AND login_time &lt;= #{endTime}</if>
+            <if test="loginStatus != null">AND login_status = #{loginStatus}</if>
+        </where>
+        ORDER BY login_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_login_info
+        <where>
+            AND status = 1
+            <if test="userId != null">AND user_id = #{userId}</if>
+            <if test="username != null and username != ''">AND username LIKE CONCAT('%', #{username}, '%')</if>
+            <if test="loginIp != null and loginIp != ''">AND login_ip LIKE CONCAT('%', #{loginIp}, '%')</if>
+            <if test="startTime != null">AND login_time >= #{startTime}</if>
+            <if test="endTime != null">AND login_time &lt;= #{endTime}</if>
+            <if test="loginStatus != null">AND login_status = #{loginStatus}</if>
+        </where>
+    </select>
+
+    <update id="updateLogoutTime">
+        UPDATE sys_login_info
+        SET logout_time = #{logoutTime}
+        WHERE user_id = #{userId}
+        AND login_id = #{loginId}
+        AND status = 1
+    </update>
+
+    <delete id="deleteBeforeTime">
+        UPDATE sys_login_info
+        SET status = 0
+        WHERE login_time &lt; #{time}
+        AND status = 1
+    </delete>
+
+    <select id="countLoginTimes" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_login_info
+        WHERE user_id = #{userId}
+        AND login_time BETWEEN #{startTime} AND #{endTime}
+        AND login_status = #{loginStatus}
+        AND status = 1
+    </select>
+</mapper> 

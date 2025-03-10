@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.czj.rbac.mapper.SysLogMapper">
+    
+    <resultMap id="BaseResultMap" type="com.czj.rbac.model.SysLog">
+        <id column="id" property="id"/>
+        <result column="module" property="module"/>
+        <result column="operation" property="operation"/>
+        <result column="content" property="content"/>
+        <result column="success" property="success"/>
+        <result column="error_msg" property="errorMsg"/>
+        <result column="operator_id" property="operatorId"/>
+        <result column="operator_name" property="operatorName"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+    
+    <sql id="Base_Column_List">
+        id, module, operation, content, success, error_msg, operator_id, operator_name, create_time
+    </sql>
+    
+    <insert id="insert" parameterType="com.czj.rbac.model.SysLog" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_log (
+            module, operation, content, success, error_msg, operator_id, operator_name, create_time
+        ) VALUES (
+            #{module}, #{operation}, #{content}, #{success}, #{errorMsg}, #{operatorId}, #{operatorName}, #{createTime}
+        )
+    </insert>
+    
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO sys_log (
+            module, operation, content, success, error_msg, operator_id, operator_name, create_time
+        ) VALUES 
+        <foreach collection="logs" item="log" separator=",">
+            (#{log.module}, #{log.operation}, #{log.content}, #{log.success}, #{log.errorMsg}, 
+             #{log.operatorId}, #{log.operatorName}, #{log.createTime})
+        </foreach>
+    </insert>
+    
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_log
+        WHERE id = #{id}
+    </select>
+    
+    <select id="findPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List"/>
+        FROM sys_log
+        <where>
+            <if test="module != null and module != ''">
+                AND module = #{module}
+            </if>
+            <if test="operation != null and operation != ''">
+                AND operation = #{operation}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{offset}, #{limit}
+    </select>
+    
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_log
+        <where>
+            <if test="module != null and module != ''">
+                AND module = #{module}
+            </if>
+            <if test="operation != null and operation != ''">
+                AND operation = #{operation}
+            </if>
+            <if test="startTime != null and startTime != ''">
+                AND create_time &gt;= #{startTime}
+            </if>
+            <if test="endTime != null and endTime != ''">
+                AND create_time &lt;= #{endTime}
+            </if>
+        </where>
+    </select>
+</mapper> 

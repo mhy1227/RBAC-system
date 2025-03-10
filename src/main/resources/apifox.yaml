@@ -1,0 +1,439 @@
+openapi: 3.0.0
+info:
+  title: RBAC权限管理系统
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: 认证管理
+  - name: 用户管理
+  - name: 角色管理
+  - name: 权限管理
+
+paths:
+  # 1. 认证管理
+  /auth/login:
+    post:
+      tags: [认证管理]
+      summary: 用户登录
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: "123456"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                code: 200
+                message: success
+                data:
+                  token: eyJhbGciOiJIUzI1NiJ9...
+
+  /auth/logout:
+    post:
+      tags: [认证管理]
+      summary: 退出登录
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /auth/info:
+    get:
+      tags: [认证管理]
+      summary: 获取当前用户信息
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                code: 200
+                message: success
+                data:
+                  id: 1
+                  username: admin
+                  nickname: 管理员
+                  email: admin@example.com
+                  phone: "13800138000"
+
+  # 2. 用户管理
+  /user/page:
+    get:
+      tags: [用户管理]
+      summary: 分页查询用户列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            example: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+              example:
+                code: 200
+                message: success
+                data:
+                  total: 100
+                  list:
+                    - id: 1
+                      username: admin
+                      nickname: 管理员
+                      email: admin@example.com
+                      phone: "13800138000"
+                      status: 1
+                      createTime: "2024-01-21 10:00:00"
+                      roles:
+                        - id: 1
+                          roleName: 超级管理员
+
+  /user/{id}:
+    get:
+      tags: [用户管理]
+      summary: 获取用户详情
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /user:
+    post:
+      tags: [用户管理]
+      summary: 新增用户
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+    
+    put:
+      tags: [用户管理]
+      summary: 更新用户
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /user/{id}/status/{status}:
+    put:
+      tags: [用户管理]
+      summary: 更新用户状态
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  # 3. 角色管理
+  /role/page:
+    get:
+      tags: [角色管理]
+      summary: 分页查询角色列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            example: 1
+        - name: size
+          in: query
+          schema:
+            type: integer
+            example: 10
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /role/{id}:
+    get:
+      tags: [角色管理]
+      summary: 获取角色详情
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /role:
+    post:
+      tags: [角色管理]
+      summary: 新增角色
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+    
+    put:
+      tags: [角色管理]
+      summary: 更新角色
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /role/{roleId}/permission:
+    post:
+      tags: [角色管理]
+      summary: 分配角色权限
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              example: [1, 2, 3]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  # 4. 权限管理
+  /permission/tree:
+    get:
+      tags: [权限管理]
+      summary: 获取权限树
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+  /permission:
+    post:
+      tags: [权限管理]
+      summary: 新增权限
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+    
+    put:
+      tags: [权限管理]
+      summary: 更新权限
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionDTO'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Result'
+
+components:
+  schemas:
+    Result:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        data:
+          type: object
+
+    UserDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        status:
+          type: integer
+        roleIds:
+          type: array
+          items:
+            type: integer
+
+    RoleDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        roleName:
+          type: string
+        roleCode:
+          type: string
+        description:
+          type: string
+        status:
+          type: integer
+
+    PermissionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        permissionName:
+          type: string
+        permissionCode:
+          type: string
+        type:
+          type: string
+          enum: [menu, button]
+        parentId:
+          type: integer
+        path:
+          type: string
+        status:
+          type: integer
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer 

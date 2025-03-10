@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.czj.rbac.mapper.SysUserMapper">
+    
+    <resultMap id="BaseResultMap" type="com.czj.rbac.model.SysUser">
+        <id column="id" jdbcType="BIGINT" property="id"/>
+        <result column="username" jdbcType="VARCHAR" property="username"/>
+        <result column="password" jdbcType="VARCHAR" property="password"/>
+        <result column="nickname" jdbcType="VARCHAR" property="nickname"/>
+        <result column="email" jdbcType="VARCHAR" property="email"/>
+        <result column="phone" jdbcType="VARCHAR" property="phone"/>
+        <result column="status" jdbcType="TINYINT" property="status"/>
+        <result column="login_fail_count" jdbcType="INTEGER" property="loginFailCount"/>
+        <result column="last_login_time" jdbcType="TIMESTAMP" property="lastLoginTime"/>
+        <result column="lock_time" jdbcType="TIMESTAMP" property="lockTime"/>
+        <result column="create_time" jdbcType="TIMESTAMP" property="createTime"/>
+        <result column="update_time" jdbcType="TIMESTAMP" property="updateTime"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        id, username, password, nickname, email, phone, status, 
+        login_fail_count, last_login_time, lock_time, create_time, update_time
+    </sql>
+
+    <select id="findByUsername" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM sys_user 
+        WHERE username = #{username}
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM sys_user 
+        WHERE id = #{id}
+    </select>
+
+    <select id="findList" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM sys_user
+        <where>
+            <if test="status != null">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <insert id="insert" parameterType="com.czj.rbac.model.SysUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO sys_user (
+            username, password, nickname, email, phone, status, create_time
+        ) VALUES (
+            #{username}, #{password}, #{nickname}, #{email}, #{phone}, #{status}, #{createTime}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.czj.rbac.model.SysUser">
+        UPDATE sys_user
+        <set>
+            <if test="username != null">username = #{username},</if>
+            <if test="password != null">password = #{password},</if>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="phone != null">phone = #{phone},</if>
+            <if test="status != null">status = #{status}</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM sys_user WHERE id = #{id}
+    </delete>
+
+    <insert id="insertUserRoles">
+        INSERT INTO sys_user_role (user_id, role_id) VALUES
+        <foreach collection="roleIds" item="roleId" separator=",">
+            (#{userId}, #{roleId})
+        </foreach>
+    </insert>
+
+    <delete id="deleteUserRoles">
+        DELETE FROM sys_user_role WHERE user_id = #{userId}
+    </delete>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM sys_user
+        <where>
+            <if test="query.username != null and query.username != ''">
+                AND username LIKE CONCAT('%', #{query.username}, '%')
+            </if>
+            <if test="query.nickname != null and query.nickname != ''">
+                AND nickname LIKE CONCAT('%', #{query.nickname}, '%')
+            </if>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+            <if test="query.userId != null">
+                AND id = #{query.userId}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        LIMIT #{query.offset}, #{query.size}
+    </select>
+
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT 
+        <include refid="Base_Column_List"/>
+        FROM sys_user
+        <where>
+            <if test="query.username != null and query.username != ''">
+                AND username LIKE CONCAT('%', #{query.username}, '%')
+            </if>
+            <if test="query.nickname != null and query.nickname != ''">
+                AND nickname LIKE CONCAT('%', #{query.nickname}, '%')
+            </if>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+        </where>
+        ${query.orderBySql}
+        LIMIT #{query.offset}, #{query.size}
+    </select>
+
+    <delete id="deleteBatchByIds">
+        DELETE FROM sys_user WHERE id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="checkUsername" resultType="int">
+        SELECT COUNT(*) FROM sys_user WHERE username = #{username}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE sys_user SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_user
+        <where>
+            <if test="query.username != null and query.username != ''">
+                AND username LIKE CONCAT('%', #{query.username}, '%')
+            </if>
+            <if test="query.nickname != null and query.nickname != ''">
+                AND nickname LIKE CONCAT('%', #{query.nickname}, '%')
+            </if>
+            <if test="query.status != null">
+                AND status = #{query.status}
+            </if>
+        </where>
+    </select>
+
+    <update id="updateLoginFail">
+        UPDATE sys_user 
+        SET login_fail_count = #{loginFailCount},
+            lock_time = #{lockTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateLastLoginTime">
+        UPDATE sys_user 
+        SET last_login_time = #{lastLoginTime}
+        WHERE id = #{id}
+    </update>
+
+    <update id="resetLoginFail">
+        UPDATE sys_user 
+        SET login_fail_count = 0,
+            lock_time = NULL
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据角色ID查询用户ID列表 -->
+    <select id="findUserIdsByRoleId" resultType="long">
+        SELECT DISTINCT u.id
+        FROM sys_user u
+        INNER JOIN sys_user_role ur ON u.id = ur.user_id
+        WHERE ur.role_id = #{roleId}
+    </select>
+</mapper> 

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>角色管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/theme-chalk/index.css" rel="stylesheet">
+    <style>
+        .page-container {
+            padding: 20px;
+        }
+        .toolbar {
+            margin-bottom: 20px;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="page-container">
+            <div class="toolbar">
+                <el-button type="primary" @click="handleAdd">新增角色</el-button>
+                <el-input
+                    v-model="query.keyword"
+                    placeholder="请输入角色名称/编码"
+                    style="width: 200px;"
+                    class="filter-item"
+                    @keyup.enter.native="handleSearch">
+                </el-input>
+                <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
+    </div>
+
+            <el-table :data="tableData" border v-loading="loading">
+                <el-table-column prop="roleName" label="角色名称"></el-table-column>
+                <el-table-column prop="roleCode" label="角色编码"></el-table-column>
+                <el-table-column prop="description" label="描述"></el-table-column>
+                <el-table-column prop="status" label="状态">
+                    <template slot-scope="scope">
+                        <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
+                            {{scope.row.status === 1 ? '启用' : '禁用'}}
+                        </el-tag>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="250">
+                    <template slot-scope="scope">
+                        <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                        <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                        <el-button size="mini" type="primary" @click="handleAssignPermissions(scope.row)">分配权限</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <div class="pagination">
+                <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="query.page"
+                    :page-sizes="[10, 20, 50, 100]"
+                    :page-size="query.size"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
+                </el-pagination>
+    </div>
+
+            <!-- 角色表单对话框 -->
+            <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="500px">
+                <el-form :model="form" :rules="rules" ref="form" label-width="80px">
+                    <el-form-item label="角色名称" prop="roleName">
+                        <el-input v-model="form.roleName"></el-input>
+                    </el-form-item>
+                    <el-form-item label="角色编码" prop="roleCode">
+                        <el-input v-model="form.roleCode"></el-input>
+                    </el-form-item>
+                    <el-form-item label="描述" prop="description">
+                        <el-input type="textarea" v-model="form.description"></el-input>
+                    </el-form-item>
+                    <el-form-item label="状态" prop="status">
+                        <el-switch v-model="form.status" :active-value="1" :inactive-value="0"></el-switch>
+                    </el-form-item>
+                </el-form>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="dialogVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确 定</el-button>
+                </div>
+            </el-dialog>
+
+            <!-- 分配权限对话框 -->
+            <el-dialog title="分配权限" :visible.sync="permissionDialogVisible" width="400px">
+                <el-tree
+                    ref="permissionTree"
+                    :data="permissionTree"
+                    :props="{
+                        children: 'children',
+                        label: 'permissionName'
+                    }"
+                    show-checkbox
+                    node-key="id">
+                </el-tree>
+                <div slot="footer" class="dialog-footer">
+                    <el-button @click="permissionDialogVisible = false">取 消</el-button>
+                    <el-button type="primary" @click="handleAssignPermissionsSubmit" :loading="assignLoading">确 定</el-button>
+                </div>
+            </el-dialog>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.13/index.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    query: {
+                        page: 1,
+                        size: 10,
+                        keyword: ''
+                    },
+                    total: 0,
+                    tableData: [],
+                    loading: false,
+                    dialogVisible: false,
+                    dialogTitle: '',
+                    submitLoading: false,
+                    form: {
+                        id: null,
+                        roleName: '',
+                        roleCode: '',
+                        description: '',
+                        status: 1
+                    },
+                    rules: {
+                        roleName: [
+                            { required: true, message: '请输入角色名称', trigger: 'blur' }
+                        ],
+                        roleCode: [
+                            { required: true, message: '请输入角色编码', trigger: 'blur' }
+                        ]
+                    },
+                    permissionDialogVisible: false,
+                    permissionTree: [],
+                    currentRoleId: null,
+                    assignLoading: false
+                }
+            },
+            created() {
+                this.fetchData();
+            },
+            methods: {
+                fetchData() {
+                    this.loading = true;
+                    axios.get('/role/page', { params: this.query })
+                        .then(response => {
+                            if (response.data.code === 200) {
+                                this.tableData = response.data.data.records;
+                                this.total = response.data.data.total;
+                            }
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+                handleSearch() {
+                    this.query.page = 1;
+                    this.fetchData();
+                },
+                handleSizeChange(val) {
+                    this.query.size = val;
+                    this.fetchData();
+                },
+                handleCurrentChange(val) {
+                    this.query.page = val;
+                    this.fetchData();
+                },
+                handleAdd() {
+                    this.dialogTitle = '新增角色';
+                    this.form = {
+                        id: null,
+                        roleName: '',
+                        roleCode: '',
+                        description: '',
+                        status: 1
+                    };
+                    this.dialogVisible = true;
+                },
+                handleEdit(row) {
+                    this.dialogTitle = '编辑角色';
+                    this.form = {...row};
+                    this.dialogVisible = true;
+                },
+                handleDelete(row) {
+                    this.$confirm('确认删除该角色?', '提示', {
+                        type: 'warning'
+                    }).then(() => {
+                        axios.delete(`/role/${row.id}`)
+                            .then(response => {
+                    if (response.data.code === 200) {
+                                    this.$message.success('删除成功');
+                                    this.fetchData();
+                                }
+                            });
+                    });
+                },
+                handleSubmit() {
+                    this.$refs.form.validate(valid => {
+                        if (valid) {
+                            this.submitLoading = true;
+                            const request = this.form.id ? 
+                                axios.put('/role', this.form) : 
+                                axios.post('/role', this.form);
+                            
+                            request.then(response => {
+                    if (response.data.code === 200) {
+                                    this.$message.success(this.form.id ? '更新成功' : '创建成功');
+                                    this.dialogVisible = false;
+                                    this.fetchData();
+                                }
+                            }).finally(() => {
+                                this.submitLoading = false;
+                            });
+                        }
+                    });
+                },
+                handleAssignPermissions(row) {
+                    this.currentRoleId = row.id;
+                    this.permissionDialogVisible = true;
+                    // 获取权限树
+            axios.get('/permission/tree')
+                        .then(response => {
+                    if (response.data.code === 200) {
+                                this.permissionTree = response.data.data;
+                                // 获取角色已有权限
+                                return axios.get(`/permission/role/${row.id}`);
+                            }
+                        })
+                        .then(response => {
+                            if (response && response.data.code === 200) {
+                                // 设置选中的权限
+                                this.$nextTick(() => {
+                                    this.$refs.permissionTree.setCheckedKeys(
+                                        response.data.data.map(p => p.id)
+                                    );
+                                });
+                            }
+                        });
+                },
+                handleAssignPermissionsSubmit() {
+                    const permissionIds = this.$refs.permissionTree.getCheckedKeys();
+                    this.assignLoading = true;
+                    axios.post(`/role/${this.currentRoleId}/permission`, permissionIds)
+                        .then(response => {
+                    if (response.data.code === 200) {
+                                this.$message.success('权限分配成功');
+                                this.permissionDialogVisible = false;
+                    }
+                        })
+                        .finally(() => {
+                            this.assignLoading = false;
+                });
+        }
+        }
+        });
+    </script>
+</body>
+</html>
